@@ -1,0 +1,28 @@
+{
+	"$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+	"name": "moment-wall-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-06-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "moment-wall-db",
+			"database_id": "f10b1c90-be27-4020-843a-14eb7e416258"
+		}
+	],
+	"vars": {
+		"APP_NAME": "随心想",
+		"API_PREFIX": "/api",
+		"ALIYUN_OSS_BUCKET": "suixin-1",
+		"ALIYUN_OSS_ENDPOINT": "oss-cn-shenzhen.aliyuncs.com"
+	},
+	"pages": {
+		"build_command": "",
+		"dest": ".",
+		"functions_dir": "functions",
+		"pages_build_output_dir": "public"
+	}
+}

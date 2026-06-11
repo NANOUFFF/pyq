@@ -1,0 +1,11 @@
+# ===========================================
+# 本地开发环境变量（复制此文件为 .dev.vars）
+# 部署后请用 wrangler secret put 设置
+# ===========================================
+
+# 阿里云 OSS 配置（必填）
+# 到阿里云 RAM 控制台创建 AccessKey
+ALIYUN_OSS_ACCESS_KEY_ID=your_access_key_id_here
+ALIYUN_OSS_ACCESS_KEY_SECRET=your_access_key_secret_here
+ALIYUN_OSS_BUCKET=suixin-1
+ALIYUN_OSS_ENDPOINT=oss-cn-shenzhen.aliyuncs.com

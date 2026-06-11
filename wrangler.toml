@@ -1,0 +1,17 @@
+name = "moment-wall-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[pages]
+  publish_dir = "."
+  functions_dir = "functions"
+
+[d1_databases]
+  DB = { binding = "DB", database_name = "moment-wall-db", database_id = "f10b1c90-be27-4020-843a-14eb7e416258" }
+
+[vars]
+  APP_NAME = "随心想"
+  API_PREFIX = "/api"
+  ALIYUN_OSS_BUCKET = "suixin-1"
+  ALIYUN_OSS_ENDPOINT = "oss-cn-shenzhen.aliyuncs.com"
