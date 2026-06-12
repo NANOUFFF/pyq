@@ -1,12 +1,13 @@
-﻿﻿-- =============================================
+﻿﻿﻿﻿-- =============================================
 -- 随心想 (Moment Wall) — D1 Database Schema
 -- =============================================
 
--- 1. 用户表：IP 自动识别，无注册
+-- 1. 用户表：Device ID 优先识别，IP 降级兼容
 CREATE TABLE IF NOT EXISTS users (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  ip_address  TEXT    NOT NULL UNIQUE,
-  nickname    TEXT    NOT NULL DEFAULT "路过的打工人",
+  device_id   TEXT    UNIQUE,                           -- 设备ID（优先使用）
+  ip_address  TEXT,                                      -- IP地址（降级兼容）
+  nickname    TEXT    NOT NULL,                          -- 昵称（随机生成）
   avatar_color TEXT   NOT NULL DEFAULT "#E0F7FA",
   avatar_seed TEXT,
   location    TEXT    NOT NULL DEFAULT "来自广州",
@@ -14,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_users_device ON users(device_id);
 CREATE INDEX IF NOT EXISTS idx_users_ip ON users(ip_address);
 
 -- 2. 动态表

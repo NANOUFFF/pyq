@@ -1,0 +1,227 @@
+2026-06-11T13:50:36.854251Z	Cloning repository...
+2026-06-11T13:50:37.686797Z	From https://github.com/NANOUFFF/pyq
+2026-06-11T13:50:37.687231Z	 * branch            18dcdf3a082a050c5bbc71b409d7000929c6ffac -> FETCH_HEAD
+2026-06-11T13:50:37.687398Z	
+2026-06-11T13:50:37.718829Z	HEAD is now at 18dcdf3 Remove old [...route].ts file
+2026-06-11T13:50:37.719203Z	
+2026-06-11T13:50:37.757254Z	
+2026-06-11T13:50:37.757597Z	Using v2 root directory strategy
+2026-06-11T13:50:37.770394Z	Success: Finished cloning repository files
+2026-06-11T13:50:39.09746Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-06-11T13:50:39.097893Z	
+2026-06-11T13:50:39.098032Z	Found wrangler.json file. Reading build configuration...
+2026-06-11T13:50:39.265169Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-06-11T13:50:39.265468Z	No build command specified. Skipping build step.
+2026-06-11T13:50:39.266019Z	Found Functions directory at /functions. Uploading.
+2026-06-11T13:50:39.270223Z	 ⛅️ wrangler 3.114.17
+2026-06-11T13:50:39.270377Z	-------------------
+2026-06-11T13:50:40.02576Z	[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mBuild failed with 11 errors:[0m
+2026-06-11T13:50:40.026102Z	
+2026-06-11T13:50:40.026171Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.026221Z	  
+2026-06-11T13:50:40.026254Z	      ../src/routes/moments.ts:1:24:
+2026-06-11T13:50:40.026293Z	  [37m      1 │ import { Hono } from "ho[32mno"[37m
+2026-06-11T13:50:40.026331Z	          ╵                         [32m~~~[0m
+2026-06-11T13:50:40.026378Z	  
+2026-06-11T13:50:40.026462Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.026524Z	  
+2026-06-11T13:50:40.026615Z	  
+2026-06-11T13:50:40.026654Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "@hono/zod-validator"[0m
+2026-06-11T13:50:40.026701Z	  
+2026-06-11T13:50:40.026769Z	      ../src/routes/moments.ts:2:27:
+2026-06-11T13:50:40.026832Z	  [37m      2 │ import { zValidator } from [32m"@hono/zod-validator"[37m
+2026-06-11T13:50:40.026913Z	          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.026964Z	  
+2026-06-11T13:50:40.027011Z	    You can mark the path "@hono/zod-validator" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.027053Z	  
+2026-06-11T13:50:40.027107Z	  
+2026-06-11T13:50:40.027168Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "zod"[0m
+2026-06-11T13:50:40.027215Z	  
+2026-06-11T13:50:40.027257Z	      ../src/routes/moments.ts:3:18:
+2026-06-11T13:50:40.02729Z	  [37m      3 │ import { z } from [32m"zod"[37m
+2026-06-11T13:50:40.027324Z	          ╵                   [32m~~~~~[0m
+2026-06-11T13:50:40.027389Z	  
+2026-06-11T13:50:40.02746Z	    You can mark the path "zod" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.027546Z	  
+2026-06-11T13:50:40.027596Z	  
+2026-06-11T13:50:40.027628Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.02767Z	  
+2026-06-11T13:50:40.027775Z	      ../src/routes/upload.ts:1:24:
+2026-06-11T13:50:40.027817Z	  [37m      1 │ import { Hono } from "ho[32mno"[37m
+2026-06-11T13:50:40.027858Z	          ╵                         [32m~~~[0m
+2026-06-11T13:50:40.027889Z	  
+2026-06-11T13:50:40.027923Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.027981Z	  
+2026-06-11T13:50:40.028031Z	  
+2026-06-11T13:50:40.028064Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "@hono/zod-validator"[0m
+2026-06-11T13:50:40.028116Z	  
+2026-06-11T13:50:40.028164Z	      ../src/routes/upload.ts:2:27:
+2026-06-11T13:50:40.0282Z	  [37m      2 │ import { zValidator } from [32m"@hono/zod-validator"[37m
+2026-06-11T13:50:40.028268Z	          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.028324Z	  
+2026-06-11T13:50:40.028356Z	    You can mark the path "@hono/zod-validator" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.028383Z	  
+2026-06-11T13:50:40.028417Z	  
+2026-06-11T13:50:40.028445Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "zod"[0m
+2026-06-11T13:50:40.028476Z	  
+2026-06-11T13:50:40.028512Z	      ../src/routes/upload.ts:3:18:
+2026-06-11T13:50:40.028556Z	  [37m      3 │ import { z } from [32m"zod"[37m
+2026-06-11T13:50:40.028648Z	          ╵                   [32m~~~~~[0m
+2026-06-11T13:50:40.028701Z	  
+2026-06-11T13:50:40.028738Z	    You can mark the path "zod" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.028771Z	  
+2026-06-11T13:50:40.028797Z	  
+2026-06-11T13:50:40.028843Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.029579Z	  
+2026-06-11T13:50:40.029804Z	      ../src/routes/users.ts:1:24:
+2026-06-11T13:50:40.029948Z	  [37m      1 │ import { Hono } from "ho[32mno"[37m
+2026-06-11T13:50:40.030071Z	          ╵                         [32m~~~[0m
+2026-06-11T13:50:40.030235Z	  
+2026-06-11T13:50:40.030438Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.030541Z	  
+2026-06-11T13:50:40.030796Z	  
+2026-06-11T13:50:40.030982Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "@hono/zod-validator"[0m
+2026-06-11T13:50:40.031101Z	  
+2026-06-11T13:50:40.031225Z	      ../src/routes/users.ts:2:27:
+2026-06-11T13:50:40.031378Z	  [37m      2 │ import { zValidator } from [32m"@hono/zod-validator"[37m
+2026-06-11T13:50:40.031547Z	          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.031888Z	  
+2026-06-11T13:50:40.031938Z	    You can mark the path "@hono/zod-validator" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.032048Z	  
+2026-06-11T13:50:40.032106Z	  
+2026-06-11T13:50:40.032223Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "zod"[0m
+2026-06-11T13:50:40.032277Z	  
+2026-06-11T13:50:40.032311Z	      ../src/routes/users.ts:3:18:
+2026-06-11T13:50:40.032345Z	  [37m      3 │ import { z } from [32m"zod"[37m
+2026-06-11T13:50:40.032394Z	          ╵                   [32m~~~~~[0m
+2026-06-11T13:50:40.032427Z	  
+2026-06-11T13:50:40.032455Z	    You can mark the path "zod" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.032482Z	  
+2026-06-11T13:50:40.032509Z	  
+2026-06-11T13:50:40.032537Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.032567Z	  
+2026-06-11T13:50:40.032708Z	      api/[[path]].ts:1:21:
+2026-06-11T13:50:40.032764Z	  [37m      1 │ import { Hono } from [32m"hono"[37m
+2026-06-11T13:50:40.033252Z	          ╵                      [32m~~~~~~[0m
+2026-06-11T13:50:40.033386Z	  
+2026-06-11T13:50:40.033546Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.033657Z	  
+2026-06-11T13:50:40.03375Z	  
+2026-06-11T13:50:40.033833Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono/cloudflare-pages"[0m
+2026-06-11T13:50:40.033891Z	  
+2026-06-11T13:50:40.033938Z	      api/[[path]].ts:2:23:
+2026-06-11T13:50:40.033973Z	  [37m      2 │ import { handle } from [32m"hono/cloudflare-pages"[37m
+2026-06-11T13:50:40.034004Z	          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.034033Z	  
+2026-06-11T13:50:40.034062Z	    You can mark the path "hono/cloudflare-pages" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.034092Z	  
+2026-06-11T13:50:40.034159Z	  
+2026-06-11T13:50:40.034188Z	
+2026-06-11T13:50:40.034216Z	
+2026-06-11T13:50:40.034248Z	
+2026-06-11T13:50:40.035977Z	[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mBuild failed with 11 errors:[0m
+2026-06-11T13:50:40.036675Z	
+2026-06-11T13:50:40.036835Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.037043Z	  
+2026-06-11T13:50:40.037102Z	      ../src/routes/moments.ts:1:24:
+2026-06-11T13:50:40.037306Z	  [37m      1 │ import { Hono } from "ho[32mno"[37m
+2026-06-11T13:50:40.037381Z	          ╵                         [32m~~~[0m
+2026-06-11T13:50:40.037468Z	  
+2026-06-11T13:50:40.037664Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.037751Z	  
+2026-06-11T13:50:40.037795Z	  
+2026-06-11T13:50:40.037831Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "@hono/zod-validator"[0m
+2026-06-11T13:50:40.037869Z	  
+2026-06-11T13:50:40.037905Z	      ../src/routes/moments.ts:2:27:
+2026-06-11T13:50:40.037937Z	  [37m      2 │ import { zValidator } from [32m"@hono/zod-validator"[37m
+2026-06-11T13:50:40.037991Z	          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.038069Z	  
+2026-06-11T13:50:40.038139Z	    You can mark the path "@hono/zod-validator" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.038195Z	  
+2026-06-11T13:50:40.038227Z	  
+2026-06-11T13:50:40.038257Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "zod"[0m
+2026-06-11T13:50:40.038306Z	  
+2026-06-11T13:50:40.03834Z	      ../src/routes/moments.ts:3:18:
+2026-06-11T13:50:40.038371Z	  [37m      3 │ import { z } from [32m"zod"[37m
+2026-06-11T13:50:40.038401Z	          ╵                   [32m~~~~~[0m
+2026-06-11T13:50:40.038431Z	  
+2026-06-11T13:50:40.03846Z	    You can mark the path "zod" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.038489Z	  
+2026-06-11T13:50:40.038523Z	  
+2026-06-11T13:50:40.038553Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.038583Z	  
+2026-06-11T13:50:40.038615Z	      ../src/routes/upload.ts:1:24:
+2026-06-11T13:50:40.038643Z	  [37m      1 │ import { Hono } from "ho[32mno"[37m
+2026-06-11T13:50:40.038671Z	          ╵                         [32m~~~[0m
+2026-06-11T13:50:40.038712Z	  
+2026-06-11T13:50:40.038743Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.038772Z	  
+2026-06-11T13:50:40.0388Z	  
+2026-06-11T13:50:40.038829Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "@hono/zod-validator"[0m
+2026-06-11T13:50:40.038859Z	  
+2026-06-11T13:50:40.038888Z	      ../src/routes/upload.ts:2:27:
+2026-06-11T13:50:40.03892Z	  [37m      2 │ import { zValidator } from [32m"@hono/zod-validator"[37m
+2026-06-11T13:50:40.038965Z	          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.038999Z	  
+2026-06-11T13:50:40.039032Z	    You can mark the path "@hono/zod-validator" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.039064Z	  
+2026-06-11T13:50:40.039103Z	  
+2026-06-11T13:50:40.039147Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "zod"[0m
+2026-06-11T13:50:40.03919Z	  
+2026-06-11T13:50:40.039225Z	      ../src/routes/upload.ts:3:18:
+2026-06-11T13:50:40.039253Z	  [37m      3 │ import { z } from [32m"zod"[37m
+2026-06-11T13:50:40.039283Z	          ╵                   [32m~~~~~[0m
+2026-06-11T13:50:40.039313Z	  
+2026-06-11T13:50:40.039348Z	    You can mark the path "zod" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.039377Z	  
+2026-06-11T13:50:40.039404Z	  
+2026-06-11T13:50:40.039433Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.039462Z	  
+2026-06-11T13:50:40.039494Z	      ../src/routes/users.ts:1:24:
+2026-06-11T13:50:40.039567Z	  [37m      1 │ import { Hono } from "ho[32mno"[37m
+2026-06-11T13:50:40.039627Z	          ╵                         [32m~~~[0m
+2026-06-11T13:50:40.039674Z	  
+2026-06-11T13:50:40.039733Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.039763Z	  
+2026-06-11T13:50:40.039791Z	  
+2026-06-11T13:50:40.03982Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "@hono/zod-validator"[0m
+2026-06-11T13:50:40.039849Z	  
+2026-06-11T13:50:40.039877Z	      ../src/routes/users.ts:2:27:
+2026-06-11T13:50:40.039905Z	  [37m      2 │ import { zValidator } from [32m"@hono/zod-validator"[37m
+2026-06-11T13:50:40.039934Z	          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.039963Z	  
+2026-06-11T13:50:40.039991Z	    You can mark the path "@hono/zod-validator" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.040019Z	  
+2026-06-11T13:50:40.040048Z	  
+2026-06-11T13:50:40.040076Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "zod"[0m
+2026-06-11T13:50:40.040102Z	  
+2026-06-11T13:50:40.040128Z	      ../src/routes/users.ts:3:18:
+2026-06-11T13:50:40.040154Z	  [37m      3 │ import { z } from [32m"zod"[37m
+2026-06-11T13:50:40.040181Z	          ╵                   [32m~~~~~[0m
+2026-06-11T13:50:40.040218Z	  
+2026-06-11T13:50:40.040248Z	    You can mark the path "zod" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.040287Z	  
+2026-06-11T13:50:40.040317Z	  
+2026-06-11T13:50:40.040345Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono"[0m
+2026-06-11T13:50:40.040372Z	  
+2026-06-11T13:50:40.040397Z	      api/[[path]].ts:1:21:
+2026-06-11T13:50:40.040424Z	  [37m      1 │ import { Hono } from [32m"hono"[37m
+2026-06-11T13:50:40.040451Z	          ╵                      [32m~~~~~~[0m
+2026-06-11T13:50:40.040478Z	  
+2026-06-11T13:50:40.040504Z	    You can mark the path "hono" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.04054Z	  
+2026-06-11T13:50:40.040568Z	  
+2026-06-11T13:50:40.040595Z	  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "hono/cloudflare-pages"[0m
+2026-06-11T13:50:40.040632Z	  
+2026-06-11T13:50:40.040661Z	      api/[[path]].ts:2:23:
+2026-06-11T13:50:40.040721Z	  [37m      2 │ import { handle } from [32m"hono/cloudflare-pages"[37m
+2026-06-11T13:50:40.040756Z	          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+2026-06-11T13:50:40.040784Z	  
+2026-06-11T13:50:40.040811Z	    You can mark the path "hono/cloudflare-pages" as external to exclude it from the bundle, which will remove this error.
+2026-06-11T13:50:40.040838Z	  
+2026-06-11T13:50:40.040883Z	  
+2026-06-11T13:50:40.040911Z	
+2026-06-11T13:50:40.040948Z	
+2026-06-11T13:50:40.04709Z	🪵  Logs were written to "/root/.config/.wrangler/logs/wrangler-2026-06-11_13-50-39_723.log"
+2026-06-11T13:50:40.125257Z	Failed building Pages Functions.
+2026-06-11T13:50:40.815654Z	Failed: generating Pages Functions failed. Check the logs above for more information. If this continues for an unknown reason, contact support: https://cfl.re/3WgEyrH

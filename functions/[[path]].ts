@@ -1,9 +1,9 @@
 import { Hono } from "hono"
 import { handle } from "hono/cloudflare-pages"
-import { momentsRoutes } from "../../src/routes/moments"
-import { usersRoutes } from "../../src/routes/users"
-import { uploadRoutes } from "../../src/routes/upload"
-import { authMiddleware } from "../../src/middleware/auth"
+import { momentsRoutes } from "../src/routes/moments"
+import { usersRoutes } from "../src/routes/users"
+import { uploadRoutes } from "../src/routes/upload"
+import { authMiddleware } from "../src/middleware/auth"
 
 export type Env = {
   DB: D1Database
