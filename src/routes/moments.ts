@@ -13,7 +13,7 @@ router.get("/", async (c) => {
   const limit = Math.min(Number(c.req.query("limit")) || 20, 50)
   const params: any[] = [userId]
 
-  let sql = "SELECT m.id, m.content, m.image_url, m.location, m.likes, m.created_at, m.is_official, u.nickname AS author, u.avatar_color AS avatar_bg, CASE WHEN l.id IS NOT NULL THEN 1 ELSE 0 END AS has_liked, CASE WHEN m.user_id = ?1 THEN 1 ELSE 0 END AS is_mine FROM moments m JOIN users u ON m.user_id = u.id LEFT JOIN likes l ON l.moment_id = m.id AND l.user_id = ?1"
+  let sql = "SELECT m.id, m.content, m.image_url, m.video, m.video_poster, m.location, m.likes, m.created_at, m.is_official, u.nickname AS author, u.avatar_color AS avatar_bg, CASE WHEN l.id IS NOT NULL THEN 1 ELSE 0 END AS has_liked, CASE WHEN m.user_id = ?1 THEN 1 ELSE 0 END AS is_mine FROM moments m JOIN users u ON m.user_id = u.id LEFT JOIN likes l ON l.moment_id = m.id AND l.user_id = ?1"
 
   if (cursor) { sql += " AND m.id < ?2"; params.push(cursor) }
   sql += " ORDER BY m.created_at DESC LIMIT ?" + (params.length + 1)
@@ -50,6 +50,7 @@ router.get("/", async (c) => {
     return {
       id: r.id, author: r.author, avatarText: r.author.charAt(0), avatarBg: r.avatar_bg,
       content: r.content, image: r.image_url || undefined, image_url: r.image_url || undefined,
+      video: r.video || undefined, videoPoster: r.video_poster || undefined,
       timestamp: formatTimeAgo(r.created_at),
       createdAt: new Date(r.created_at + "Z").getTime(),
       location: r.location, likes: r.likes,
@@ -64,14 +65,14 @@ router.get("/", async (c) => {
 })
 
 // POST /api/moments
-const publishSchema = z.object({ content: z.string().min(1).max(280), imageUrl: z.string().optional(), location: z.string().optional() })
+const publishSchema = z.object({ content: z.string().min(1).max(280), imageUrl: z.string().optional(), videoUrl: z.string().optional(), videoPoster: z.string().optional(), location: z.string().optional() })
 router.post("/", zValidator("json", publishSchema), async (c) => {
   const userId = c.get("userId"); const db = c.env.DB
-  const { content, imageUrl, location } = c.req.valid("json")
+  const { content, imageUrl, videoUrl, videoPoster, location } = c.req.valid("json")
   const id = generateMomentId(); const loc = location || "来自广州"
-  await db.prepare("INSERT INTO moments (id, user_id, content, image_url, location) VALUES (?, ?, ?, ?, ?)").bind(id, userId, content, imageUrl || null, loc).run()
+  await db.prepare("INSERT INTO moments (id, user_id, content, image_url, video, video_poster, location) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(id, userId, content, imageUrl || null, videoUrl || null, videoPoster || null, loc).run()
   const user = await db.prepare("SELECT nickname, avatar_color FROM users WHERE id = ?").bind(userId).first<{ nickname: string; avatar_color: string }>()
-  return c.json({ success: true, data: { id, author: user?.nickname + " (你)", avatarText: user?.nickname?.charAt(0) || "路", avatarBg: user?.avatar_color || "#E0F7FA", content, image: imageUrl || undefined, image_url: imageUrl || undefined, timestamp: "刚刚", createdAt: Date.now(), location: loc, likes: 0, hasLiked: false, isMine: true, isOfficial: false } }, 201)
+  return c.json({ success: true, data: { id, author: user?.nickname + " (你)", avatarText: user?.nickname?.charAt(0) || "路", avatarBg: user?.avatar_color || "#E0F7FA", content, image: imageUrl || undefined, image_url: imageUrl || undefined, video: videoUrl || undefined, videoPoster: videoPoster || undefined, timestamp: "刚刚", createdAt: Date.now(), location: loc, likes: 0, hasLiked: false, isMine: true, isOfficial: false } }, 201)
 })
 
 // DELETE /api/moments/:id

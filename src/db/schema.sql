@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS moments (
   user_id     INTEGER NOT NULL,
   content     TEXT    NOT NULL,
   image_url   TEXT,
+  video       TEXT,
+  video_poster TEXT,
   location    TEXT    NOT NULL DEFAULT "来自广州",
   likes       INTEGER NOT NULL DEFAULT 0,
   is_official INTEGER NOT NULL DEFAULT 0,
