@@ -1,4 +1,4 @@
-﻿﻿﻿﻿-- =============================================
+﻿﻿﻿﻿﻿﻿-- =============================================
 -- 随心想 (Moment Wall) — D1 Database Schema
 -- =============================================
 
@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   device_id   TEXT    UNIQUE,                           -- 设备ID（优先使用）
   ip_address  TEXT,                                      -- IP地址（降级兼容）
   nickname    TEXT    NOT NULL,                          -- 昵称（随机生成）
+  initial_nickname TEXT,                                 -- 首次注册时的初始昵称
   avatar_color TEXT   NOT NULL DEFAULT "#E0F7FA",
   avatar_seed TEXT,
   location    TEXT    NOT NULL DEFAULT "来自广州",

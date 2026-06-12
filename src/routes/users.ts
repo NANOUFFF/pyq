@@ -21,8 +21,18 @@ router.get("/me", async (c) => {
 const nicknameSchema = z.object({ nickname: z.string().min(1).max(10) })
 router.put("/nickname", zValidator("json", nicknameSchema), async (c) => {
   const userId = c.get("userId"); const db = c.env.DB; const { nickname } = c.req.valid("json")
-  const newColor = nickname === "路过的打工人" ? "#E0F7FA" : "#FFE4E1"
-  await db.prepare("UPDATE users SET nickname = ?, avatar_color = ?, updated_at = datetime('now') WHERE id = ?").bind(nickname, newColor, userId).run()
+
+  let newColor = "#FFE4E1"
+  let finalNickname = nickname
+
+  // 如果是"重置昵称"操作（前端传入"路过的打工人"表示重置），则使用用户的初始昵称
+  if (nickname === "路过的打工人") {
+    const user = await db.prepare("SELECT initial_nickname FROM users WHERE id = ?").bind(userId).first<{ initial_nickname: string | null }>()
+    finalNickname = user?.initial_nickname || nickname
+    newColor = "#E0F7FA"
+  }
+
+  await db.prepare("UPDATE users SET nickname = ?, avatar_color = ?, updated_at = datetime('now') WHERE id = ?").bind(finalNickname, newColor, userId).run()
   const u = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address FROM users WHERE id = ?").bind(userId).first()
   return c.json({ success: true, data: formatUser(u) })
 })
