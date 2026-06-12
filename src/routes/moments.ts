@@ -39,7 +39,7 @@ router.get("/", async (c) => {
       }))
     }
     comments = commentsData.results.map((r: any) => ({
-      id: r.id, moment_id: r.moment_id, author: r.nickname, avatarBg: r.avatar_color, avatarText: r.nickname.charAt(0),
+      id: r.id, author: r.nickname, avatarBg: r.avatar_color, avatarText: r.nickname.charAt(0),
       content: r.content, timestamp: formatTimeAgo(r.created_at),
       replies: replies.filter((rep: any) => rep.commentId === r.id)
     }))
@@ -80,8 +80,26 @@ router.delete("/:id", async (c) => {
   const moment = await db.prepare("SELECT user_id FROM moments WHERE id = ?").bind(id).first<{ user_id: number }>()
   if (!moment) return c.json({ success: false, error: "动态不存在" }, 404)
   if (moment.user_id !== userId) return c.json({ success: false, error: "只能删除自己的动态" }, 403)
+  
+  // 先获取该动态的所有评论ID
+  const comments = await db.prepare("SELECT id FROM comments WHERE moment_id = ?").bind(id).all<any>()
+  const commentIds = comments.results.map((c: any) => c.id)
+  
+  // 删除评论回复（如果有评论）
+  if (commentIds.length > 0) {
+    const placeholders = commentIds.map(() => "?").join(",")
+    await db.prepare(`DELETE FROM comment_replies WHERE comment_id IN (${placeholders})`).bind(...commentIds).run()
+  }
+  
+  // 删除评论
+  await db.prepare("DELETE FROM comments WHERE moment_id = ?").bind(id).run()
+  
+  // 删除点赞
   await db.prepare("DELETE FROM likes WHERE moment_id = ?").bind(id).run()
+  
+  // 删除动态
   await db.prepare("DELETE FROM moments WHERE id = ?").bind(id).run()
+  
   return c.json({ success: true, data: { id } })
 })
 
