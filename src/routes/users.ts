@@ -1,4 +1,4 @@
-﻿import { Hono } from "hono"
+import { Hono } from "hono"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 
@@ -38,6 +38,39 @@ router.put("/avatar", zValidator("json", avatarSchema), async (c) => {
   await db.prepare("UPDATE users SET avatar_color = ?, avatar_seed = ?, updated_at = datetime('now') WHERE id = ?").bind(color, seed || "", userId).run()
   const u = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address FROM users WHERE id = ?").bind(userId).first()
   return c.json({ success: true, data: formatUser(u) })
+})
+
+// DELETE /api/users/me/data - 删除当前用户的所有数据
+router.delete("/me/data", async (c) => {
+  const userId = c.get("userId")
+  const db = c.env.DB
+
+  // 获取用户的所有动态ID
+  const moments = await db.prepare("SELECT id FROM moments WHERE user_id = ?").bind(userId).all<any>()
+  const momentIds = moments.results.map((m: any) => m.id)
+
+  // 如果有动态，先删除相关的评论回复、评论、点赞
+  if (momentIds.length > 0) {
+    // 获取所有评论ID
+    const comments = await db.prepare(`SELECT id FROM comments WHERE moment_id IN (${momentIds.map(() => "?").join(",")})`).bind(...momentIds).all<any>()
+    const commentIds = comments.results.map((c: any) => c.id)
+
+    // 删除评论回复
+    if (commentIds.length > 0) {
+      await db.prepare(`DELETE FROM comment_replies WHERE comment_id IN (${commentIds.map(() => "?").join(",")})`).bind(...commentIds).run()
+    }
+
+    // 删除评论
+    await db.prepare(`DELETE FROM comments WHERE moment_id IN (${momentIds.map(() => "?").join(",")})`).bind(...momentIds).run()
+
+    // 删除点赞
+    await db.prepare(`DELETE FROM likes WHERE moment_id IN (${momentIds.map(() => "?").join(",")})`).bind(...momentIds).run()
+
+    // 删除动态
+    await db.prepare(`DELETE FROM moments WHERE id IN (${momentIds.map(() => "?").join(",")})`).bind(...momentIds).run()
+  }
+
+  return c.json({ success: true, data: { message: "数据已清空" } })
 })
 
 function formatUser(u: any) {
