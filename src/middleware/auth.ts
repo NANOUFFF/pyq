@@ -33,11 +33,11 @@ export async function authMiddleware(c: Context, next: Next) {
     if (deviceUser) {
       userId = deviceUser.id
     } else {
-      // 新用户：创建账号，使用 UUID 前8位作为昵称
+      // 新用户：创建账号，使用随机字符串作为昵称
       const nickname = generateNickname()
       const result = await db
-        .prepare("INSERT INTO users (device_id, nickname) VALUES (?, ?)")
-        .bind(deviceId, nickname)
+        .prepare("INSERT INTO users (device_id, ip_address, nickname) VALUES (?, ?, ?)")
+        .bind(deviceId, ip, nickname)
         .run()
       userId = Number(result.meta.last_row_id)
     }
