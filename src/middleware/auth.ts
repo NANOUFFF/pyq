@@ -1,16 +1,14 @@
 import { Context, Next } from "hono"
 import { extractClientIP } from "../utils/ip"
 
-// 生成 UUID 格式的昵称（取前8位）
+// 生成随机字符串作为昵称（8位）
 function generateNickname(): string {
-  // 使用 crypto.randomUUID 或降级方案
-  const uuid = crypto.randomUUID?.() || 
-    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0
-      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
-    })
-  // 取前8位作为昵称，如 "a1b2c3d4"
-  return uuid.slice(0, 8)
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
 }
 
 export async function authMiddleware(c: Context, next: Next) {
