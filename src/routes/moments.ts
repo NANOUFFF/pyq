@@ -1,4 +1,4 @@
-﻿import { Hono } from "hono"
+import { Hono } from "hono"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { generateMomentId } from "../utils/ip"
@@ -20,14 +20,46 @@ router.get("/", async (c) => {
   params.push(limit)
 
   const { results } = await db.prepare(sql).bind(...params).all<any>()
-  const moments = results.map((r: any) => ({
-    id: r.id, author: r.author, avatarText: r.author.charAt(0), avatarBg: r.avatar_bg,
-    content: r.content, image: r.image_url || undefined, image_url: r.image_url || undefined,
-    timestamp: formatTimeAgo(r.created_at),
-    createdAt: new Date(r.created_at + "Z").getTime(),
-    location: r.location, likes: r.likes,
-    hasLiked: r.has_liked === 1, isMine: r.is_mine === 1, isOfficial: r.is_official === 1,
-  }))
+
+  // 获取所有动态的评论和回复
+  const momentIds = results.map((r: any) => r.id)
+
+  let comments: any[] = []
+  if (momentIds.length > 0) {
+    const placeholders = momentIds.map(() => "?").join(",")
+    const commentsData = await db.prepare(`SELECT c.id, c.moment_id, c.content, c.created_at, u.nickname, u.avatar_color FROM comments c JOIN users u ON c.user_id = u.id WHERE c.moment_id IN (${placeholders}) ORDER BY c.created_at ASC`).bind(...momentIds).all<any>()
+    const commentIds = commentsData.results.map((r: any) => r.id)
+    let replies: any[] = []
+    if (commentIds.length > 0) {
+      const replyPlaceholders = commentIds.map(() => "?").join(",")
+      const repliesData = await db.prepare(`SELECT r.id, r.comment_id, r.content, r.created_at, u.nickname, u.avatar_color FROM comment_replies r JOIN users u ON r.user_id = u.id WHERE r.comment_id IN (${replyPlaceholders}) ORDER BY r.created_at ASC`).bind(...commentIds).all<any>()
+      replies = repliesData.results.map((r: any) => ({
+        id: r.id, author: r.nickname, avatarBg: r.avatar_color, avatarText: r.nickname.charAt(0),
+        content: r.content, timestamp: formatTimeAgo(r.created_at), commentId: r.comment_id
+      }))
+    }
+    comments = commentsData.results.map((r: any) => ({
+      id: r.id, author: r.nickname, avatarBg: r.avatar_color, avatarText: r.nickname.charAt(0),
+      content: r.content, timestamp: formatTimeAgo(r.created_at),
+      replies: replies.filter((rep: any) => rep.commentId === r.id)
+    }))
+  }
+
+  const moments = results.map((r: any) => {
+    const momentComments = comments.filter((cmt: any) => cmt.moment_id === r.id)
+    return {
+      id: r.id, author: r.author, avatarText: r.author.charAt(0), avatarBg: r.avatar_bg,
+      content: r.content, image: r.image_url || undefined, image_url: r.image_url || undefined,
+      timestamp: formatTimeAgo(r.created_at),
+      createdAt: new Date(r.created_at + "Z").getTime(),
+      location: r.location, likes: r.likes,
+      hasLiked: r.has_liked === 1, isMine: r.is_mine === 1, isOfficial: r.is_official === 1,
+      comments: momentComments.map((cmt: any) => ({
+        id: cmt.id, author: cmt.author, avatarBg: cmt.avatarBg, avatarText: cmt.avatarText,
+        content: cmt.content, timestamp: cmt.timestamp, replies: cmt.replies
+      }))
+    }
+  })
   return c.json({ success: true, data: moments })
 })
 
@@ -68,6 +100,76 @@ router.post("/:id/like", async (c) => {
     const m = await db.prepare("SELECT likes FROM moments WHERE id = ?").bind(momentId).first<{ likes: number }>()
     return c.json({ success: true, data: { hasLiked: true, likes: m?.likes || 0 } })
   }
+})
+
+// POST /api/moments/:momentId/comments - 添加评论
+const commentSchema = z.object({ content: z.string().min(1).max(280) })
+router.post("/:momentId/comments", zValidator("json", commentSchema), async (c) => {
+  const userId = c.get("userId")
+  const db = c.env.DB
+  const momentId = c.req.param("momentId")
+  const { content } = c.req.valid("json")
+
+  // 检查动态是否存在
+  const moment = await db.prepare("SELECT id FROM moments WHERE id = ?").bind(momentId).first()
+  if (!moment) return c.json({ success: false, error: "动态不存在" }, 404)
+
+  // 生成评论ID
+  const commentId = `cmt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+
+  // 插入评论
+  await db.prepare("INSERT INTO comments (id, moment_id, user_id, content) VALUES (?, ?, ?, ?)").bind(commentId, momentId, userId, content).run()
+
+  // 获取用户信息
+  const user = await db.prepare("SELECT nickname, avatar_color FROM users WHERE id = ?").bind(userId).first<{ nickname: string; avatar_color: string }>()
+
+  return c.json({
+    success: true,
+    data: {
+      id: commentId,
+      author: user?.nickname + " (你)",
+      avatarBg: user?.avatar_color || "#E0F7FA",
+      avatarText: user?.nickname?.charAt(0) || "评",
+      content,
+      timestamp: "刚刚",
+      replies: []
+    }
+  }, 201)
+})
+
+// POST /api/moments/:momentId/comments/:commentId/replies - 添加回复
+const replySchema = z.object({ content: z.string().min(1).max(280) })
+router.post("/:momentId/comments/:commentId/replies", zValidator("json", replySchema), async (c) => {
+  const userId = c.get("userId")
+  const db = c.env.DB
+  const { momentId, commentId } = c.req.param()
+  const { content } = c.req.valid("json")
+
+  // 检查评论是否存在
+  const comment = await db.prepare("SELECT id FROM comments WHERE id = ? AND moment_id = ?").bind(commentId, momentId).first()
+  if (!comment) return c.json({ success: false, error: "评论不存在" }, 404)
+
+  // 生成回复ID
+  const replyId = `rep_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+
+  // 插入回复
+  await db.prepare("INSERT INTO comment_replies (id, comment_id, user_id, content) VALUES (?, ?, ?, ?)").bind(replyId, commentId, userId, content).run()
+
+  // 获取用户信息
+  const user = await db.prepare("SELECT nickname, avatar_color FROM users WHERE id = ?").bind(userId).first<{ nickname: string; avatar_color: string }>()
+
+  return c.json({
+    success: true,
+    data: {
+      id: replyId,
+      author: user?.nickname + " (你)",
+      avatarBg: user?.avatar_color || "#E0F7FA",
+      avatarText: user?.nickname?.charAt(0) || "回",
+      content,
+      timestamp: "刚刚",
+      commentId
+    }
+  }, 201)
 })
 
 function formatTimeAgo(dateStr: string): string {

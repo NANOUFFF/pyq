@@ -65,6 +65,31 @@ CREATE TABLE IF NOT EXISTS media (
 );
 CREATE INDEX IF NOT EXISTS idx_media_user ON media(user_id);
 
+-- 5. 评论表
+CREATE TABLE IF NOT EXISTS comments (
+  id         TEXT    PRIMARY KEY,
+  moment_id  TEXT    NOT NULL,
+  user_id    INTEGER NOT NULL,
+  content    TEXT    NOT NULL,
+  created_at TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (moment_id) REFERENCES moments(id),
+  FOREIGN KEY (user_id)   REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_comments_moment ON comments(moment_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(user_id);
+
+-- 6. 评论回复表
+CREATE TABLE IF NOT EXISTS comment_replies (
+  id         TEXT    PRIMARY KEY,
+  comment_id TEXT    NOT NULL,
+  user_id    INTEGER NOT NULL,
+  content    TEXT    NOT NULL,
+  created_at TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (comment_id) REFERENCES comments(id),
+  FOREIGN KEY (user_id)   REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_replies_comment ON comment_replies(comment_id);
+
 -- 5. 种子数据：官方机器人账号 + 初始欢迎动态
 INSERT OR IGNORE INTO users (id, ip_address, nickname, avatar_color, location)
 VALUES (1, "system", "MomentBot", "#E8E7F1", "来自云端");
