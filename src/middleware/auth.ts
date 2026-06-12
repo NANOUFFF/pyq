@@ -30,15 +30,23 @@ export async function authMiddleware(c: Context, next: Next) {
     if (deviceUser) {
       userId = deviceUser.id
     } else {
+      const nickname = generateNickname()
       try {
-        const nickname = generateNickname()
         const result = await db
           .prepare("INSERT INTO users (device_id, ip_address, nickname) VALUES (?, ?, ?)")
           .bind(deviceId, ip, nickname)
           .run()
         userId = Number(result.meta.last_row_id)
       } catch {
-        deviceId = null
+        try {
+          const result = await db
+            .prepare("INSERT INTO users (device_id, nickname) VALUES (?, ?)")
+            .bind(deviceId, nickname)
+            .run()
+          userId = Number(result.meta.last_row_id)
+        } catch {
+          deviceId = null
+        }
       }
     }
   }
