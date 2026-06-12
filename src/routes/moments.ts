@@ -74,8 +74,8 @@ router.post("/", zValidator("json", publishSchema), async (c) => {
   return c.json({ success: true, data: { id, author: user?.nickname + " (你)", avatarText: user?.nickname?.charAt(0) || "路", avatarBg: user?.avatar_color || "#E0F7FA", content, image: imageUrl || undefined, image_url: imageUrl || undefined, timestamp: "刚刚", createdAt: Date.now(), location: loc, likes: 0, hasLiked: false, isMine: true, isOfficial: false } }, 201)
 })
 
-// POST /api/moments/:momentId/comments - 添加评论
-router.post("/:momentId/comments", async (c) => {
+// POST /api/moments/comments/:momentId - 添加评论
+router.post("/comments/:momentId", async (c) => {
   const userId = c.get("userId")
   const db = c.env.DB
   const momentId = c.req.param("momentId")
@@ -109,13 +109,13 @@ router.post("/:momentId/comments", async (c) => {
   }, 201)
 })
 
-// POST /api/moments/:momentId/comments/:commentId/replies - 添加回复
-const replySchema = z.object({ content: z.string().min(1).max(280) })
-router.post("/:momentId/comments/:commentId/replies", zValidator("json", replySchema), async (c) => {
+// POST /api/moments/replies/:commentId - 添加回复
+router.post("/replies/:commentId", async (c) => {
   const userId = c.get("userId")
   const db = c.env.DB
   const { commentId } = c.req.param()
-  const { content } = c.req.valid("json")
+  const body = await c.req.json()
+  const content = body.content || ""
 
   // 检查评论是否存在
   const comment = await db.prepare("SELECT id FROM comments WHERE id = ?").bind(commentId).first()
