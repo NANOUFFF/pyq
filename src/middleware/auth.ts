@@ -1,14 +1,10 @@
 import { Context, Next } from "hono"
 import { extractClientIP } from "../utils/ip"
 
-// 生成随机字符串作为昵称（8位）
 function generateNickname(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return result
+  const timestamp = Date.now().toString(36)
+  const random = Math.random().toString(36).substring(2, 8)
+  return `${timestamp}${random}`
 }
 
 export async function authMiddleware(c: Context, next: Next) {
