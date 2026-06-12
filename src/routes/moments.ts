@@ -76,37 +76,14 @@ router.post("/", zValidator("json", publishSchema), async (c) => {
 
 // POST /api/moments/comments/:momentId - 添加评论
 router.post("/comments/:momentId", async (c) => {
-  const userId = c.get("userId")
-  const db = c.env.DB
-  const momentId = c.req.param("momentId")
-  const body = await c.req.json()
-  const content = body.content || ""
-
-  // 检查动态是否存在
+  const userId = c.get("userId"); const db = c.env.DB; const momentId = c.req.param("momentId")
+  const body = await c.req.json(); const content = body.content || ""
   const moment = await db.prepare("SELECT id FROM moments WHERE id = ?").bind(momentId).first()
   if (!moment) return c.json({ success: false, error: "动态不存在" }, 404)
-
-  // 生成评论ID
   const commentId = `cmt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-
-  // 插入评论
   await db.prepare("INSERT INTO comments (id, moment_id, user_id, content) VALUES (?, ?, ?, ?)").bind(commentId, momentId, userId, content).run()
-
-  // 获取用户信息
   const user = await db.prepare("SELECT nickname, avatar_color FROM users WHERE id = ?").bind(userId).first<{ nickname: string; avatar_color: string }>()
-
-  return c.json({
-    success: true,
-    data: {
-      id: commentId,
-      author: user?.nickname + " (你)",
-      avatarBg: user?.avatar_color || "#E0F7FA",
-      avatarText: user?.nickname?.charAt(0) || "评",
-      content,
-      timestamp: "刚刚",
-      replies: []
-    }
-  }, 201)
+  return c.json({ success: true, data: { id: commentId, author: user?.nickname + " (你)", avatarBg: user?.avatar_color || "#E0F7FA", avatarText: user?.nickname?.charAt(0) || "评", content, timestamp: "刚刚", replies: [] } }, 201)
 })
 
 // POST /api/moments/replies/:commentId - 添加回复

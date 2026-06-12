@@ -35,10 +35,4 @@ app.route("/api/moments", momentsRoutes)
 app.route("/api/users", usersRoutes)
 app.route("/api/upload", uploadRoutes)
 
-// Test nested route
-app.post("/api/moments/:momentId/comments/test", async (c) => {
-  const momentId = c.req.param("momentId")
-  return c.json({ success: true, data: { momentId, message: "Nested route test works!" } })
-})
-
 export const onRequest = handle(app)
