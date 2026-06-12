@@ -14,7 +14,7 @@ function generateNickname(): string {
 export async function authMiddleware(c: Context, next: Next) {
   const db = c.env.DB
   
-  const deviceId = c.req.header("X-Device-ID")
+  let deviceId = c.req.header("X-Device-ID")
   const ip = extractClientIP(c.req.raw)
   
   c.set("ipAddress", ip)
