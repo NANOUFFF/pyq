@@ -97,5 +97,4 @@ VALUES (1, "system", "MomentBot", "#E8E7F1", "来自云端");
 
 INSERT OR IGNORE INTO moments (id, user_id, content, location, likes, is_official, created_at)
 VALUES 
-  ("mom_welcome", 1, "欢迎来到随心想。在这里，你可以随意倾诉。每一条瞬间都会在 24 小时后隐去。", "来自云端", 112, 1, CURRENT_TIMESTAMP),
-  ("mom_sample_01", 1, "深夜吐槽，KPI 真是要把人搞疯。", "来自上海", 5, 0, CURRENT_TIMESTAMP);
+  ("mom_welcome", 1, "欢迎来到随心想。在这里，你可以随意倾诉。每一条瞬间都会在 24 小时后隐去。", "来自云端", 112, 1, CURRENT_TIMESTAMP);
