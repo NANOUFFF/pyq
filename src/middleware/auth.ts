@@ -30,14 +30,20 @@ export async function authMiddleware(c: Context, next: Next) {
     if (deviceUser) {
       userId = deviceUser.id
     } else {
-      const nickname = generateNickname()
-      const result = await db
-        .prepare("INSERT INTO users (device_id, ip_address, nickname) VALUES (?, ?, ?)")
-        .bind(deviceId, ip, nickname)
-        .run()
-      userId = Number(result.meta.last_row_id)
+      try {
+        const nickname = generateNickname()
+        const result = await db
+          .prepare("INSERT INTO users (device_id, ip_address, nickname) VALUES (?, ?, ?)")
+          .bind(deviceId, ip, nickname)
+          .run()
+        userId = Number(result.meta.last_row_id)
+      } catch {
+        deviceId = null
+      }
     }
-  } else {
+  }
+  
+  if (!deviceId) {
     // 降级方案：使用 IP 地址（兼容性）
     const ipUser = await db
       .prepare("SELECT id FROM users WHERE ip_address = ?")
