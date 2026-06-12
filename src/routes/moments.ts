@@ -142,11 +142,11 @@ const replySchema = z.object({ content: z.string().min(1).max(280) })
 router.post("/:momentId/comments/:commentId/replies", zValidator("json", replySchema), async (c) => {
   const userId = c.get("userId")
   const db = c.env.DB
-  const { momentId, commentId } = c.req.param()
+  const { commentId } = c.req.param()
   const { content } = c.req.valid("json")
 
   // 检查评论是否存在
-  const comment = await db.prepare("SELECT id FROM comments WHERE id = ? AND moment_id = ?").bind(commentId, momentId).first()
+  const comment = await db.prepare("SELECT id FROM comments WHERE id = ?").bind(commentId).first()
   if (!comment) return c.json({ success: false, error: "评论不存在" }, 404)
 
   // 生成回复ID
