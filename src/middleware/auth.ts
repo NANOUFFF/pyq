@@ -1,17 +1,16 @@
 import { Context, Next } from "hono"
 import { extractClientIP } from "../utils/ip"
 
-// 随机昵称词库
-const NICKNAME_PARTS = {
-  mood: ["开心的", "焦虑的", "迷茫的", "兴奋的", "疲惫的", "悠闲的", "忙碌的", "伤心的", "乐观的", "浪漫的"],
-  role: ["上班族", "学生党", "程序员", "设计师", "打工人", "创业者", "自由职业者", "考研人", "加班狗", "摸鱼大师", "夜猫子", "早起鸟"]
-}
-
-// 生成随机昵称
-function generateRandomNickname(): string {
-  const mood = NICKNAME_PARTS.mood[Math.floor(Math.random() * NICKNAME_PARTS.mood.length)]
-  const role = NICKNAME_PARTS.role[Math.floor(Math.random() * NICKNAME_PARTS.role.length)]
-  return mood + role
+// 生成 UUID 格式的昵称（取前8位）
+function generateNickname(): string {
+  // 使用 crypto.randomUUID 或降级方案
+  const uuid = crypto.randomUUID?.() || 
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+    })
+  // 取前8位作为昵称，如 "a1b2c3d4"
+  return uuid.slice(0, 8)
 }
 
 export async function authMiddleware(c: Context, next: Next) {
@@ -36,8 +35,8 @@ export async function authMiddleware(c: Context, next: Next) {
     if (deviceUser) {
       userId = deviceUser.id
     } else {
-      // 新用户：创建账号，使用随机昵称
-      const nickname = generateRandomNickname()
+      // 新用户：创建账号，使用 UUID 前8位作为昵称
+      const nickname = generateNickname()
       const result = await db
         .prepare("INSERT INTO users (device_id, nickname) VALUES (?, ?)")
         .bind(deviceId, nickname)
@@ -54,8 +53,8 @@ export async function authMiddleware(c: Context, next: Next) {
     if (ipUser) {
       userId = ipUser.id
     } else {
-      // 新用户：创建账号，使用随机昵称
-      const nickname = generateRandomNickname()
+      // 新用户：创建账号，使用 UUID 前8位作为昵称
+      const nickname = generateNickname()
       const result = await db
         .prepare("INSERT INTO users (ip_address, nickname) VALUES (?, ?)")
         .bind(ip, nickname)
