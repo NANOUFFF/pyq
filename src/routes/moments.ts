@@ -39,7 +39,7 @@ router.get("/", async (c) => {
       }))
     }
     comments = commentsData.results.map((r: any) => ({
-      id: r.id, author: r.nickname, avatarBg: r.avatar_color, avatarText: r.nickname.charAt(0),
+      id: r.id, moment_id: r.moment_id, author: r.nickname, avatarBg: r.avatar_color, avatarText: r.nickname.charAt(0),
       content: r.content, timestamp: formatTimeAgo(r.created_at),
       replies: replies.filter((rep: any) => rep.commentId === r.id)
     }))
