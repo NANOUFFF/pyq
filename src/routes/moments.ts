@@ -75,12 +75,12 @@ router.post("/", zValidator("json", publishSchema), async (c) => {
 })
 
 // POST /api/moments/:momentId/comments - 添加评论
-const commentSchema = z.object({ content: z.string().min(1).max(280) })
-router.post("/:momentId/comments", zValidator("json", commentSchema), async (c) => {
+router.post("/:momentId/comments", async (c) => {
   const userId = c.get("userId")
   const db = c.env.DB
   const momentId = c.req.param("momentId")
-  const { content } = c.req.valid("json")
+  const body = await c.req.json()
+  const content = body.content || ""
 
   // 检查动态是否存在
   const moment = await db.prepare("SELECT id FROM moments WHERE id = ?").bind(momentId).first()
