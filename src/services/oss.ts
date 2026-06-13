@@ -7,13 +7,39 @@ export interface UploadResult {
   key: string; successActionStatus: string; publicUrl: string
 }
 
+const ALLOWED_CONTENT_TYPES = new Set([
+  "image/jpeg", "image/png", "image/gif", "image/webp",
+  "video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"
+])
+
+const SIZE_LIMITS: Record<string, number> = {
+  image: 10 * 1024 * 1024,   // 图片 10MB
+  video: 100 * 1024 * 1024,  // 视频 100MB
+}
+
 export async function generateOSSUploadConfig(
-  config: OSSUploadConfig, fileName: string, contentType: string, maxSize = 10 * 1024 * 1024
+  config: OSSUploadConfig, fileName: string, contentType: string, maxSize?: number
 ): Promise<UploadResult> {
+  // 1. MIME 类型白名单检查
+  if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+    throw new Error("不支持的文件类型: " + contentType)
+  }
+
+  const mediaType = contentType.startsWith("video/") ? "video" : "image"
+  const sizeLimit = maxSize || SIZE_LIMITS[mediaType] || 10 * 1024 * 1024
+
   const { accessKeyId, accessKeySecret, bucket, endpoint } = config
   const objectKey = "moments/" + Date.now().toString(36) + "_" + fileName.replace(/[^a-zA-Z0-9._-]/g, "_")
   const expiration = new Date(Date.now() + 3600 * 1000).toISOString()
-  const policyObj = { expiration, conditions: [["content-length-range", 0, maxSize], { bucket }, ["starts-with", "$key", "moments/"], ["eq", "$success_action_status", "200"]] }
+  const policyObj = {
+    expiration,
+    conditions: [
+      ["content-length-range", 0, sizeLimit],
+      { bucket },
+      ["starts-with", "$key", "moments/"],
+      ["eq", "$success_action_status", "200"]
+    ]
+  }
   const policyBase64 = btoa(JSON.stringify(policyObj))
   const signature = await hmacSha1(policyBase64, accessKeySecret)
   const ossHost = "https://" + bucket + "." + endpoint
