@@ -29,7 +29,9 @@ export async function generateOSSUploadConfig(
   const sizeLimit = maxSize || SIZE_LIMITS[mediaType] || 10 * 1024 * 1024
 
   const { accessKeyId, accessKeySecret, bucket, endpoint } = config
-  const objectKey = "moments/" + Date.now().toString(36) + "_" + fileName.replace(/[^a-zA-Z0-9._-]/g, "_")
+  const now = new Date()
+  const dateDir = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`
+  const objectKey = `moments/${dateDir}/${Date.now().toString(36)}_${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`
   const expiration = new Date(Date.now() + 3600 * 1000).toISOString()
   const policyObj = {
     expiration,
