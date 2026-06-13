@@ -17,6 +17,7 @@ export async function authMiddleware(c: Context, next: Next) {
   
   let userId: number
   
+  // 优先通过 deviceId 精确匹配
   if (deviceId) {
     const deviceUser = await db
       .prepare("SELECT id FROM users WHERE device_id = ?")
@@ -25,31 +26,12 @@ export async function authMiddleware(c: Context, next: Next) {
     
     if (deviceUser) {
       userId = deviceUser.id
-    } else {
-      const nickname = generateNickname()
-      try {
-        const result = await db
-          .prepare("INSERT INTO users (device_id, ip_address, nickname, initial_nickname) VALUES (?, ?, ?, ?)")
-          .bind(deviceId, ip, nickname, nickname)
-          .run()
-        userId = Number(result.meta.last_row_id)
-      } catch {
-        try {
-          const result = await db
-            .prepare("INSERT INTO users (device_id, nickname, initial_nickname) VALUES (?, ?, ?)")
-            .bind(deviceId, nickname, nickname)
-            .run()
-          userId = Number(result.meta.last_row_id)
-        } catch {
-          deviceId = null
-        }
-      }
     }
+    // 注意：deviceId 不匹配时不要急着新建用户，先试试 IP 找回
   }
   
-  // 如果 deviceId 没匹配到用户，尝试通过 IP 找回原有账号
-  // 同时把当前 deviceId 回写，防止下次又找不到
-  if ((!deviceId || !userId!) && ip) {
+  // 如果 deviceId 没匹配到，尝试通过 IP 找回原有账号
+  if (!userId!) {
     const ipUser = await db
       .prepare("SELECT id, device_id FROM users WHERE ip_address = ?")
       .bind(ip)
@@ -61,13 +43,25 @@ export async function authMiddleware(c: Context, next: Next) {
       if (deviceId && ipUser.device_id !== deviceId) {
         await db.prepare("UPDATE users SET device_id = ? WHERE id = ?").bind(deviceId, ipUser.id).run()
       }
+    }
+  }
+  
+  // 两种方式都找不到 → 创建新用户
+  if (!userId!) {
+    const nickname = generateNickname()
+    if (deviceId) {
+      try {
+        const result = await db.prepare("INSERT INTO users (device_id, ip_address, nickname, initial_nickname) VALUES (?, ?, ?, ?)")
+          .bind(deviceId, ip, nickname, nickname).run()
+        userId = Number(result.meta.last_row_id)
+      } catch {
+        const result = await db.prepare("INSERT INTO users (device_id, nickname, initial_nickname) VALUES (?, ?, ?)")
+          .bind(deviceId, nickname, nickname).run()
+        userId = Number(result.meta.last_row_id)
+      }
     } else {
-      // 完全的新用户
-      const nickname = generateNickname()
-      const result = await db
-        .prepare("INSERT INTO users (ip_address, nickname, initial_nickname" + (deviceId ? ", device_id" : "") + ") VALUES (?, ?, ?" + (deviceId ? ", ?" : "") + ")")
-        .bind(ip, nickname, nickname, ...(deviceId ? [deviceId] : []))
-        .run()
+      const result = await db.prepare("INSERT INTO users (ip_address, nickname, initial_nickname) VALUES (?, ?, ?)")
+        .bind(ip, nickname, nickname).run()
       userId = Number(result.meta.last_row_id)
     }
   }
