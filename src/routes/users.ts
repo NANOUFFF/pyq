@@ -7,10 +7,19 @@ const router = new Hono<{ Bindings: { DB: D1Database }; Variables: { userId: num
 // GET /api/users/me
 router.get("/me", async (c) => {
   const userId = c.get("userId"); const db = c.env.DB
-  const user = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address FROM users WHERE id = ?").bind(userId).first<{
-    id: number; nickname: string; avatar_color: string; avatar_seed: string; location: string; ip_address: string
+  let user = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first<{
+    id: number; nickname: string; avatar_color: string; avatar_seed: string; location: string; ip_address: string; device_id: string | null
   }>()
   if (!user) return c.json({ success: false, error: "用户不存在" }, 404)
+
+  // 如果用户还没有 deviceId，自动生成一个并写入数据库
+  // 前端拿到后存入 localStorage，之后即使清 Cookie 也能找回身份
+  if (!user.device_id) {
+    const newDeviceId = `gen_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`
+    await db.prepare("UPDATE users SET device_id = ? WHERE id = ?").bind(newDeviceId, userId).run()
+    user.device_id = newDeviceId
+  }
+
   return c.json({
     success: true,
     data: formatUser(user)
@@ -86,6 +95,7 @@ router.delete("/me/data", async (c) => {
 function formatUser(u: any) {
   return {
     id: u.id,
+    deviceId: u.device_id || undefined,
     nickname: u.nickname,
     avatarColor: u.avatar_color,
     avatarSeed: u.avatar_seed || "",
