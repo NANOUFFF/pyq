@@ -1,14 +1,15 @@
-﻿﻿﻿﻿﻿﻿-- =============================================
+﻿﻿-- =============================================
 -- 随心想 (Moment Wall) — D1 Database Schema
 -- =============================================
 
--- 1. 用户表：Device ID 优先识别，IP 降级兼容
+-- 1. 用户表：Account 优先（手机号/邮箱），Device ID 次之，IP 降级兼容
 CREATE TABLE IF NOT EXISTS users (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  device_id   TEXT    UNIQUE,                           -- 设备ID（优先使用）
-  ip_address  TEXT,                                      -- IP地址（降级兼容）
-  nickname    TEXT    NOT NULL,                          -- 昵称（随机生成）
-  initial_nickname TEXT,                                 -- 首次注册时的初始昵称
+  account     TEXT    UNIQUE,                              -- 用户账号（手机号/邮箱），最稳定的身份
+  device_id   TEXT    UNIQUE,                              -- 设备ID（次优先）
+  ip_address  TEXT,                                        -- IP地址（降级兼容）
+  nickname    TEXT    NOT NULL,                            -- 昵称（随机生成）
+  initial_nickname TEXT,                                   -- 首次注册时的初始昵称
   avatar_color TEXT   NOT NULL DEFAULT "#E0F7FA",
   avatar_seed TEXT,
   location    TEXT    NOT NULL DEFAULT "来自广州",
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_users_account ON users(account);
 CREATE INDEX IF NOT EXISTS idx_users_device ON users(device_id);
 CREATE INDEX IF NOT EXISTS idx_users_ip ON users(ip_address);
 
@@ -93,7 +95,7 @@ CREATE TABLE IF NOT EXISTS comment_replies (
 );
 CREATE INDEX IF NOT EXISTS idx_replies_comment ON comment_replies(comment_id);
 
--- 5. 种子数据：官方机器人账号 + 初始欢迎动态
+-- 7. 种子数据：官方机器人账号 + 初始欢迎动态
 INSERT OR IGNORE INTO users (id, ip_address, nickname, avatar_color, location)
 VALUES (1, "system", "MomentBot", "#E8E7F1", "来自云端");
 

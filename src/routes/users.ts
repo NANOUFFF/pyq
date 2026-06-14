@@ -1,19 +1,19 @@
 import { Hono } from "hono"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
+import { isValidAccount } from "../middleware/auth"
 
 const router = new Hono<{ Bindings: { DB: D1Database }; Variables: { userId: number; ipAddress: string } }>()
 
 // GET /api/users/me
 router.get("/me", async (c) => {
   const userId = c.get("userId"); const db = c.env.DB
-  let user = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first<{
-    id: number; nickname: string; avatar_color: string; avatar_seed: string; location: string; ip_address: string; device_id: string | null
+  let user = await db.prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first<{
+    id: number; account: string | null; nickname: string; avatar_color: string; avatar_seed: string; location: string; ip_address: string; device_id: string | null
   }>()
   if (!user) return c.json({ success: false, error: "用户不存在" }, 404)
 
   // 如果用户还没有 deviceId，自动生成一个并写入数据库
-  // 前端拿到后存入 localStorage，之后即使清 Cookie 也能找回身份
   if (!user.device_id) {
     const newDeviceId = `gen_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`
     await db.prepare("UPDATE users SET device_id = ? WHERE id = ?").bind(newDeviceId, userId).run()
@@ -24,6 +24,39 @@ router.get("/me", async (c) => {
     success: true,
     data: formatUser(user)
   })
+})
+
+// PUT /api/users/account - 绑定账号（手机号/邮箱）
+const accountSchema = z.object({
+  account: z.string().min(1).refine(isValidAccount, { message: "请输入正确的手机号或邮箱格式" })
+})
+router.put("/account", zValidator("json", accountSchema), async (c) => {
+  const userId = c.get("userId"); const db = c.env.DB; const { account } = c.req.valid("json")
+
+  // 检查该账号是否已经被其他用户绑定
+  const existing = await db.prepare("SELECT id FROM users WHERE account = ? AND id != ?").bind(account, userId).first()
+  if (existing) {
+    return c.json({ success: false, error: "该账号已被其他用户绑定" }, 409)
+  }
+
+  await db.prepare("UPDATE users SET account = ?, updated_at = datetime('now') WHERE id = ?").bind(account, userId).run()
+  const u = await db.prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first()
+  return c.json({ success: true, data: formatUser(u), message: "账号绑定成功" })
+})
+
+// POST /api/users/login - 通过账号登录（仅验证账号是否存在，无密码）
+const loginSchema = z.object({
+  account: z.string().min(1).refine(isValidAccount, { message: "请输入正确的手机号或邮箱格式" })
+})
+router.post("/login", zValidator("json", loginSchema), async (c) => {
+  const db = c.env.DB; const { account } = c.req.valid("json")
+
+  const user = await db.prepare("SELECT id FROM users WHERE account = ?").bind(account).first<{ id: number }>()
+  if (!user) {
+    return c.json({ success: false, error: "该账号未注册，请先绑定" }, 404)
+  }
+
+  return c.json({ success: true, data: { userId: user.id, redirect: true }, message: "账号存在" })
 })
 
 // PUT /api/users/nickname
@@ -42,7 +75,7 @@ router.put("/nickname", zValidator("json", nicknameSchema), async (c) => {
   }
 
   await db.prepare("UPDATE users SET nickname = ?, avatar_color = ?, updated_at = datetime('now') WHERE id = ?").bind(finalNickname, newColor, userId).run()
-  const u = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address FROM users WHERE id = ?").bind(userId).first()
+  const u = await db.prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first()
   return c.json({ success: true, data: formatUser(u) })
 })
 
@@ -55,7 +88,7 @@ router.put("/avatar", zValidator("json", avatarSchema), async (c) => {
   const userId = c.get("userId"); const db = c.env.DB
   const { color, seed } = c.req.valid("json")
   await db.prepare("UPDATE users SET avatar_color = ?, avatar_seed = ?, updated_at = datetime('now') WHERE id = ?").bind(color, seed || "", userId).run()
-  const u = await db.prepare("SELECT id, nickname, avatar_color, avatar_seed, location, ip_address FROM users WHERE id = ?").bind(userId).first()
+  const u = await db.prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first()
   return c.json({ success: true, data: formatUser(u) })
 })
 
@@ -95,6 +128,7 @@ router.delete("/me/data", async (c) => {
 function formatUser(u: any) {
   return {
     id: u.id,
+    account: u.account || undefined,
     deviceId: u.device_id || undefined,
     nickname: u.nickname,
     avatarColor: u.avatar_color,
