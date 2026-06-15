@@ -1,5 +1,5 @@
 import { Context, Next } from "hono"
-import { extractClientIP } from "../utils/ip"
+import { extractClientIP, extractLocation } from "../utils/ip"
 
 function generateNickname(): string {
   const timestamp = Date.now().toString(36)
@@ -73,10 +73,11 @@ export async function authMiddleware(c: Context, next: Next) {
     }
 
     const nickname = generateNickname()
+    const location = extractLocation(c)
     if (deviceId) {
       try {
-        const result = await db.prepare("INSERT INTO users (device_id, ip_address, nickname, initial_nickname) VALUES (?, ?, ?, ?)")
-          .bind(deviceId, ip, nickname, nickname).run()
+        const result = await db.prepare("INSERT INTO users (device_id, ip_address, nickname, initial_nickname, location) VALUES (?, ?, ?, ?, ?)")
+          .bind(deviceId, ip, nickname, nickname, location).run()
         userId = Number(result.meta.last_row_id)
       } catch {
         const result = await db.prepare("INSERT INTO users (device_id, nickname, initial_nickname) VALUES (?, ?, ?)")
@@ -84,8 +85,8 @@ export async function authMiddleware(c: Context, next: Next) {
         userId = Number(result.meta.last_row_id)
       }
     } else {
-      const result = await db.prepare("INSERT INTO users (ip_address, nickname, initial_nickname) VALUES (?, ?, ?)")
-        .bind(ip, nickname, nickname).run()
+      const result = await db.prepare("INSERT INTO users (ip_address, nickname, initial_nickname, location) VALUES (?, ?, ?, ?)")
+        .bind(ip, nickname, nickname, location).run()
       userId = Number(result.meta.last_row_id)
     }
   }

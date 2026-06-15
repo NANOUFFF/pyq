@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
-import { generateMomentId } from "../utils/ip"
+import { generateMomentId, extractLocation } from "../utils/ip"
 
 const router = new Hono<{ Bindings: { DB: D1Database }; Variables: { userId: number } }>()
 
@@ -69,7 +69,7 @@ const publishSchema = z.object({ content: z.string().min(1).max(280), imageUrl: 
 router.post("/", zValidator("json", publishSchema), async (c) => {
   const userId = c.get("userId"); const db = c.env.DB
   const { content, imageUrl, videoUrl, videoPoster, location } = c.req.valid("json")
-  const id = generateMomentId(); const loc = location || "来自广州"
+  const id = generateMomentId(); const loc = location || extractLocation(c)
   await db.prepare("INSERT INTO moments (id, user_id, content, image_url, video, video_poster, location) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(id, userId, content, imageUrl || null, videoUrl || null, videoPoster || null, loc).run()
   const user = await db.prepare("SELECT nickname, avatar_color FROM users WHERE id = ?").bind(userId).first<{ nickname: string; avatar_color: string }>()
   return c.json({ success: true, data: { id, author: user?.nickname + " (你)", avatarText: user?.nickname?.charAt(0) || "路", avatarBg: user?.avatar_color || "#E0F7FA", content, image: imageUrl || undefined, image_url: imageUrl || undefined, video: videoUrl || undefined, videoPoster: videoPoster || undefined, timestamp: "刚刚", createdAt: Date.now(), location: loc, likes: 0, hasLiked: false, isMine: true, isOfficial: false } }, 201)
