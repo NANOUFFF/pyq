@@ -111,6 +111,40 @@ router.post("/login", zValidator("json", loginSchema), async (c) => {
   })
 })
 
+// POST /api/users/logout - 退出登录/解绑当前设备
+router.post("/logout", async (c) => {
+  const userId = c.get("userId")
+  const db = c.env.DB
+  const deviceId = c.req.header("X-Device-ID")
+
+  if (!deviceId) {
+    return c.json({ success: false, error: "缺少设备标识" }, 400)
+  }
+
+  // 获取当前用户信息
+  const currentUser = await db.prepare("SELECT account FROM users WHERE id = ?").bind(userId).first<{ account: string | null }>()
+  
+  // 1. 清除当前用户的 device_id（解绑设备）
+  await db.prepare("UPDATE users SET device_id = NULL, updated_at = datetime('now') WHERE id = ?").bind(userId).run()
+
+  // 2. 为这个设备创建一个新的临时用户（游客身份）
+  const nickname = `guest_${Date.now().toString(36)}${Math.random().toString(36).substring(2, 8)}`
+  const ip = c.get("ipAddress") || "0.0.0.0"
+  const result = await db.prepare("INSERT INTO users (device_id, ip_address, nickname, initial_nickname) VALUES (?, ?, ?, ?)")
+    .bind(deviceId, ip, nickname, nickname).run()
+  const newUserId = Number(result.meta.last_row_id)
+
+  return c.json({
+    success: true,
+    data: {
+      userId: newUserId,
+      deviceId,
+      account: currentUser?.account || undefined,
+      message: currentUser?.account ? "账号已解绑，已切换到游客模式" : "已退出登录"
+    }
+  })
+})
+
 // PUT /api/users/nickname
 const nicknameSchema = z.object({ nickname: z.string().min(1).max(10) })
 router.put("/nickname", zValidator("json", nicknameSchema), async (c) => {
@@ -142,6 +176,21 @@ router.put("/avatar", zValidator("json", avatarSchema), async (c) => {
   await db.prepare("UPDATE users SET avatar_color = ?, avatar_seed = ?, updated_at = datetime('now') WHERE id = ?").bind(color, seed || "", userId).run()
   const u = await db.prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?").bind(userId).first()
   return c.json({ success: true, data: formatUser(u) })
+})
+
+// DELETE /api/users/me/account - 解绑账号（清空 account 字段）
+router.delete("/me/account", async (c) => {
+  const userId = c.get("userId"); const db = c.env.DB
+
+  // 检查用户是否已绑定账号
+  const user = await db.prepare("SELECT account FROM users WHERE id = ?").bind(userId).first<{ account: string | null }>()
+  if (!user?.account) {
+    return c.json({ success: false, error: "当前用户未绑定账号" }, 404)
+  }
+
+  await db.prepare("UPDATE users SET account = NULL, updated_at = datetime('now') WHERE id = ?").bind(userId).run()
+
+  return c.json({ success: true, data: { message: "账号已解绑" } })
 })
 
 // DELETE /api/users/me/data - 删除当前用户的所有数据
