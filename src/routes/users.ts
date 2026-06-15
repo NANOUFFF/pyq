@@ -14,6 +14,7 @@ router.get("/me", async (c) => {
   if (!user) return c.json({ success: false, error: "用户不存在" }, 404)
 
   // 如果用户还没有 deviceId，自动生成一个并写入数据库
+  // 前端后续请求会携带此 device_id 作为 X-Device-ID header，方便 authMiddleware 识别
   if (!user.device_id) {
     const newDeviceId = `gen_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`
     await db.prepare("UPDATE users SET device_id = ? WHERE id = ?").bind(newDeviceId, userId).run()
@@ -44,19 +45,70 @@ router.put("/account", zValidator("json", accountSchema), async (c) => {
   return c.json({ success: true, data: formatUser(u), message: "账号绑定成功" })
 })
 
-// POST /api/users/login - 通过账号登录（仅验证账号是否存在，无密码）
+// POST /api/users/login - 通过账号登录，并把当前设备切换到该账号用户
 const loginSchema = z.object({
-  account: z.string().min(1).refine(isValidAccount, { message: "请输入正确的手机号或邮箱格式" })
+  account: z.string().min(1).refine(isValidAccount, { message: "请输入正确的手机号或邮箱格式" }),
+  deviceId: z.string().min(1).optional(),
 })
 router.post("/login", zValidator("json", loginSchema), async (c) => {
-  const db = c.env.DB; const { account } = c.req.valid("json")
+  const db = c.env.DB
+  const { account, deviceId: bodyDeviceId } = c.req.valid("json")
+  const headerDeviceId = c.req.header("X-Device-ID")
+  const deviceId = headerDeviceId || bodyDeviceId
 
   const user = await db.prepare("SELECT id FROM users WHERE account = ?").bind(account).first<{ id: number }>()
   if (!user) {
     return c.json({ success: false, error: "该账号未注册，请先绑定" }, 404)
   }
 
-  return c.json({ success: true, data: { userId: user.id, redirect: true }, message: "账号存在" })
+  // 重要：把当前设备绑定到账号用户。
+  // 如果不把当前设备绑定到账号用户，前端登录后继续携带设备 ID 时，会被 authMiddleware 识别成登录前的临时用户，导致读不到账号数据。
+  if (deviceId) {
+    // 1. 先清除其他用户对该 device_id 的占用（避免后续冲突）
+    await db.prepare("UPDATE users SET device_id = NULL WHERE device_id = ? AND id != ?").bind(deviceId, user.id).run()
+    // 2. 把 device_id 绑定到账号用户
+    await db.prepare("UPDATE users SET device_id = ?, updated_at = datetime('now') WHERE id = ?").bind(deviceId, user.id).run()
+  } else {
+    // 如果没有设备 ID，检查账号用户是否已有 device_id，若没有就生成一个
+    const accountUser = await db.prepare("SELECT device_id FROM users WHERE id = ?").bind(user.id).first<{ device_id: string | null }>()
+    if (!accountUser?.device_id) {
+      const newDeviceId = `login_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`
+      await db.prepare("UPDATE users SET device_id = ?, updated_at = datetime('now') WHERE id = ?").bind(newDeviceId, user.id).run()
+      // 返回新生成的 deviceId，让前端后续请求携带 X-Device-ID header
+      const loggedInUser = await db
+        .prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?")
+        .bind(user.id)
+        .first()
+      return c.json({
+        success: true,
+        data: {
+          userId: user.id,
+          redirect: true,
+          user: formatUser(loggedInUser),
+          deviceId: newDeviceId,
+          account,
+        },
+        message: "登录成功"
+      })
+    }
+  }
+
+  const loggedInUser = await db
+    .prepare("SELECT id, account, nickname, avatar_color, avatar_seed, location, ip_address, device_id FROM users WHERE id = ?")
+    .bind(user.id)
+    .first()
+
+  return c.json({
+    success: true,
+    data: {
+      userId: user.id,
+      redirect: true,
+      user: formatUser(loggedInUser),
+      deviceId: loggedInUser ? (loggedInUser as any).device_id || undefined : undefined,
+      account,
+    },
+    message: "登录成功"
+  })
 })
 
 // PUT /api/users/nickname

@@ -18,14 +18,14 @@ export function isValidAccount(val: string): boolean {
 
 export async function authMiddleware(c: Context, next: Next) {
   const db = c.env.DB
-  
+
   const account = c.req.header("X-Account")        // 最高优先级：手机号/邮箱
   const deviceId = c.req.header("X-Device-ID")     // 次优先级：设备ID
-  const ip = extractClientIP(c.req.raw)             // 仅用于新用户记录，不用于匹配
-  
+  const ip = extractClientIP(c.req.raw)             // 仅用于新用户记录，不用与匹配
+
   c.set("ipAddress", ip)
-  
-  let userId: number
+
+  let userId: number | undefined
 
   // ─── 第一优先级：通过 Account 精确匹配 ───
   if (account && isValidAccount(account)) {
@@ -33,31 +33,45 @@ export async function authMiddleware(c: Context, next: Next) {
       .prepare("SELECT id FROM users WHERE account = ?")
       .bind(account)
       .first<{ id: number }>()
-    
+
     if (accountUser) {
       userId = accountUser.id
       // 如果带了 deviceId，同步绑定到该用户（方便同设备下次用 deviceId 匹配）
       if (deviceId) {
+        // 先清除其他用户对该 device_id 的占用（避免 UNIQUE 约束冲突）
+        await db.prepare("UPDATE users SET device_id = NULL WHERE device_id = ? AND id != ?")
+          .bind(deviceId, userId).run()
+        // 再绑定到当前用户
         await db.prepare("UPDATE users SET device_id = ? WHERE id = ? AND (device_id IS NULL OR device_id != ?)")
           .bind(deviceId, userId, deviceId).run()
       }
     }
   }
 
-  // ─── 第二优先级：通过 Device ID 匹配（仅当有 deviceId 时）───
-  if (!userId! && deviceId) {
+  // ─── 第二优先级：通过 Device ID 匹配（仅当有 deviceId 且第一优先级未找到时）───
+  if (!userId && deviceId) {
     const deviceUser = await db
       .prepare("SELECT id FROM users WHERE device_id = ?")
       .bind(deviceId)
       .first<{ id: number }>()
-    
+
     if (deviceUser) {
       userId = deviceUser.id
     }
   }
-  
-  // ─── 都找不到 → 创建新用户（不通过 IP 匹配，避免同 WiFi 共用账号）───
-  if (!userId!) {
+
+  // ─── 都找不到 → 创建新用户（但不为 /api/users/login 创建，让 login handler 自行处理）───
+  if (!userId) {
+    const url = new URL(c.req.url)
+    // 如果是 login 请求，不做自动创建用户，让 login handler 来识别
+    if (url.pathname === "/api/users/login") {
+      // login 路由：设置 userId 为 undefined，但不要创建新用户
+      // login handler 会自己查询 account 并返回正确的用户信息
+      c.set("userId", 0) // 设为 0 表示未认证，login handler 应忽略此值
+      await next()
+      return
+    }
+
     const nickname = generateNickname()
     if (deviceId) {
       try {
@@ -75,7 +89,7 @@ export async function authMiddleware(c: Context, next: Next) {
       userId = Number(result.meta.last_row_id)
     }
   }
-  
+
   c.set("userId", userId)
   await next()
 }
