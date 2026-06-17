@@ -3,6 +3,7 @@ import { handle } from "hono/cloudflare-pages"
 import { momentsRoutes } from "../src/routes/moments"
 import { usersRoutes } from "../src/routes/users"
 import { uploadRoutes } from "../src/routes/upload"
+import { adminRoutes } from "../src/routes/admin"
 import { authMiddleware } from "../src/middleware/auth"
 
 export type Env = {
@@ -13,6 +14,7 @@ export type Env = {
   ALIYUN_OSS_ENDPOINT: string
   APP_NAME: string
   API_PREFIX: string
+  ADMIN_TOKEN?: string
 }
 
 const app = new Hono<{ Bindings: Env; Variables: { userId: number; ipAddress: string } }>()
@@ -34,5 +36,6 @@ app.get("/", (c) => c.json({ app: c.env.APP_NAME, version: "1.0.0", status: "ok"
 app.route("/api/moments", momentsRoutes)
 app.route("/api/users", usersRoutes)
 app.route("/api/upload", uploadRoutes)
+app.route("/api/admin", adminRoutes)
 
 export const onRequest = handle(app)
