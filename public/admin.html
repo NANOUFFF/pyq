@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>随心想 - 管理后台</title>
+<style>
+  :root {
+    --primary: #10b981;
+    --primary-dark: #059669;
+    --bg: #0f172a;
+    --bg-card: #1e293b;
+    --bg-input: #334155;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #10b981;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Login */
+  .login-container {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .login-box {
+    background: var(--bg-card); border-radius: 16px;
+    padding: 40px; width: 100%; max-width: 380px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  }
+  .login-box h1 { font-size: 22px; margin-bottom: 8px; text-align: center; }
+  .login-box p { color: var(--text-muted); text-align: center; margin-bottom: 24px; font-size: 14px; }
+  .login-box input {
+    width: 100%; padding: 12px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg-input);
+    color: var(--text); font-size: 15px; margin-bottom: 16px; outline: none;
+  }
+  .login-box input:focus { border-color: var(--primary); }
+  .login-box button {
+    width: 100%; padding: 12px; border-radius: 8px; border: none;
+    background: var(--primary); color: #fff; font-size: 15px; cursor: pointer; font-weight: 600;
+  }
+  .login-box button:hover { background: var(--primary-dark); }
+  .login-error { color: var(--danger); font-size: 13px; text-align: center; margin-bottom: 12px; display: none; }
+
+  /* Layout */
+  .app-container { display: none; }
+  .app-header {
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .app-header h1 { font-size: 17px; }
+  .app-header .logout-btn {
+    background: none; border: 1px solid var(--border); color: var(--text-muted);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  .app-header .logout-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+  .app-body { display: flex; }
+  .sidebar {
+    width: 200px; background: var(--bg-card); border-right: 1px solid var(--border);
+    min-height: calc(100vh - 56px); padding: 12px 0; flex-shrink: 0;
+  }
+  .sidebar-item {
+    padding: 10px 20px; cursor: pointer; color: var(--text-muted);
+    font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all .15s;
+  }
+  .sidebar-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
+  .sidebar-item.active { background: rgba(16,185,129,.1); color: var(--primary); font-weight: 500; }
+  .sidebar-icon { width: 18px; text-align: center; }
+
+  .main-content { flex: 1; padding: 24px; overflow-x: auto; }
+  .page-section { display: none; }
+  .page-section.active { display: block; }
+
+  /* Dashboard */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--border);
+  }
+  .stat-card .label { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Table */
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+  }
+  .table-header h2 { font-size: 18px; }
+  .table-header .search-box { display: flex; gap: 8px; }
+  .table-header input[type="text"] {
+    padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg-input); color: var(--text); font-size: 13px; outline: none; width: 220px;
+  }
+  .table-header input:focus { border-color: var(--primary); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 10px 14px; text-align: left; font-size: 13px; }
+  th { background: rgba(255,255,255,.03); color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+  td { border-bottom: 1px solid rgba(255,255,255,.04); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .badge-danger { background: rgba(239,68,68,.15); color: var(--danger); }
+  .badge-success { background: rgba(16,185,129,.15); color: var(--success); }
+  .badge-warning { background: rgba(245,158,11,.15); color: var(--warning); }
+
+  .action-btn {
+    padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer;
+    font-size: 12px; margin-right: 4px; background: var(--bg-input); color: var(--text);
+  }
+  .action-btn:hover { opacity: .8; }
+  .action-btn.danger { background: rgba(239,68,68,.2); color: var(--danger); }
+  .action-btn.success { background: rgba(16,185,129,.2); color: var(--success); }
+  .action-btn.warning { background: rgba(245,158,11,.2); color: var(--warning); }
+
+  .pagination {
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px;
+  }
+  .pagination button {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text); cursor: pointer; font-size: 13px;
+  }
+  .pagination button:hover { border-color: var(--primary); color: var(--primary); }
+  .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+  .pagination span { font-size: 13px; color: var(--text-muted); }
+
+  .loading {
+    text-align: center; padding: 40px; color: var(--text-muted);
+  }
+  .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    z-index: 200; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: 12px; width: 100%; max-width: 520px;
+    max-height: 80vh; overflow-y: auto; padding: 24px;
+  }
+  .modal h3 { font-size: 17px; margin-bottom: 16px; }
+  .modal .close-btn {
+    float: right; background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; line-height: 1;
+  }
+  .modal .close-btn:hover { color: var(--text); }
+  .modal .field { margin-bottom: 12px; }
+  .modal .field label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+  .modal .field .val { font-size: 14px; word-break: break-all; }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; right: 20px; z-index: 300;
+    padding: 12px 20px; border-radius: 8px; font-size: 14px;
+    background: var(--bg-card); border: 1px solid var(--border); color: var(--text);
+    box-shadow: 0 10px 25px rgba(0,0,0,.4); display: none; max-width: 360px;
+  }
+  .toast.show { display: block; animation: fadeIn .2s; }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--danger); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-container" id="loginContainer">
+  <div class="login-box">
+    <h1>🔐 管理后台</h1>
+    <p>随心想 · 请输入管理员 Token</p>
+    <div class="login-error" id="loginError">Token 无效，请重试</div>
+    <input type="password" id="tokenInput" placeholder="管理员 Token" autocomplete="off" />
+    <button onclick="login()">进入管理后台</button>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app-container" id="appContainer">
+  <div class="app-header">
+    <h1>📊 随心想 · 管理后台</h1>
+    <button class="logout-btn" onclick="logout()">退出登录</button>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="sidebar-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+        <span class="sidebar-icon">📈</span> 仪表盘
+      </div>
+      <div class="sidebar-item" data-page="users" onclick="switchPage('users')">
+        <span class="sidebar-icon">👥</span> 用户管理
+      </div>
+      <div class="sidebar-item" data-page="moments" onclick="switchPage('moments')">
+        <span class="sidebar-icon">📝</span> 动态管理
+      </div>
+      <div class="sidebar-item" data-page="comments" onclick="switchPage('comments')">
+        <span class="sidebar-icon">💬</span> 评论管理
+      </div>
+    </div>
+    <div class="main-content">
+      <!-- Dashboard -->
+      <div class="page-section active" id="page-dashboard">
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+      <!-- Users -->
+      <div class="page-section" id="page-users">
+        <div class="table-header">
+          <h2>👥 用户列表</h2>
+          <div class="search-box">
+            <input type="text" id="userSearch" placeholder="搜索 ID / 昵称 / 账号 / IP" onkeyup="searchUsers(event)" />
+          </div>
+        </div>
+        <div id="usersTableContainer"></div>
+        <div class="pagination" id="usersPagination"></div>
+      </div>
+      <!-- Moments -->
+      <div class="page-section" id="page-moments">
+        <div class="table-header">
+          <h2>📝 动态列表</h2>
+        </div>
+        <div id="momentsTableContainer"></div>
+        <div class="pagination" id="momentsPagination"></div>
+      </div>
+      <!-- Comments -->
+      <div class="page-section" id="page-comments">
+        <div class="table-header">
+          <h2>💬 评论列表</h2>
+        </div>
+        <div id="commentsTableContainer"></div>
+        <div class="pagination" id="commentsPagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== State ====================
+const API_BASE = '/api/admin';
+let ADMIN_TOKEN = '';
+let currentPage = 'dashboard';
+let states = {
+  users: { page: 1, keyword: '', pageSize: 15 },
+  moments: { page: 1, pageSize: 15 },
+  comments: { page: 1, pageSize: 15 },
+};
+
+// ==================== Utils ====================
+function $(id) { return document.getElementById(id); }
+
+function toast(msg, type = 'success') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showLoading(container) {
+  container.innerHTML = '<div class="loading">⏳ 加载中...</div>';
+}
+
+function formatTime(t) {
+  if (!t) return '-';
+  // t is like "2025-06-11 12:34:56"
+  return t.replace('T', ' ').substring(0, 19);
+}
+
+// ==================== API ====================
+async function api(path, options = {}) {
+  const url = API_BASE + path;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Admin-Token': ADMIN_TOKEN,
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || '请求失败');
+  return data;
+}
+
+// ==================== Login ====================
+function login() {
+  const token = $('tokenInput').value.trim();
+  if (!token) { $('loginError').style.display = 'block'; $('loginError').textContent = '请输入 Token'; return; }
+
+  // test token by calling dashboard
+  ADMIN_TOKEN = token;
+  api('/dashboard')
+    .then(data => {
+      $('loginContainer').style.display = 'none';
+      $('appContainer').style.display = 'block';
+      $('loginError').style.display = 'none';
+      loadDashboard();
+    })
+    .catch(err => {
+      ADMIN_TOKEN = '';
+      $('loginError').style.display = 'block';
+      $('loginError').textContent = 'Token 无效或请求失败: ' + err.message;
+    });
+}
+
+function logout() {
+  ADMIN_TOKEN = '';
+  $('appContainer').style.display = 'none';
+  $('loginContainer').style.display = 'flex';
+  $('tokenInput').value = '';
+}
+
+$('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+// ==================== Navigation ====================
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  document.querySelectorAll('.page-section').forEach(el => el.classList.toggle('active', el.id === 'page-' + page));
+
+  switch (page) {
+    case 'dashboard': loadDashboard(); break;
+    case 'users': loadUsers(); break;
+    case 'moments': loadMoments(); break;
+    case 'comments': loadComments(); break;
+  }
+}
+
+// ==================== Dashboard ====================
+async function loadDashboard() {
+  try {
+    const res = await api('/dashboard');
+    const d = res.data;
+    $('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="label">总用户数</div><div class="value">${d.totalUsers}</div></div>
+      <div class="stat-card"><div class="label">总动态数</div><div class="value">${d.totalMoments}</div></div>
+      <div class="stat-card"><div class="label">总评论数</div><div class="value">${d.totalComments}</div></div>
+      <div class="stat-card"><div class="label">今日动态</div><div class="value">${d.todayMoments}</div></div>
+      <div class="stat-card"><div class="label">封禁用户</div><div class="value" style="color:${d.bannedUsers > 0 ? 'var(--danger)' : 'var(--text)'}">${d.bannedUsers}</div></div>
+    `;
+  } catch (e) {
+    $('statsGrid').innerHTML = '<div class="empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+// ==================== Users ====================
+function searchUsers(e) {
+  if (e.key === 'Enter') {
+    states.users.keyword = e.target.value.trim();
+    states.users.page = 1;
+    loadUsers();
+  }
+}
+
+async function loadUsers() {
+  const container = $('usersTableContainer');
+  showLoading(container);
+  try {
+    const s = states.users;
+    const res = await api(`/users?page=${s.page}&pageSize=${s.pageSize}&keyword=${encodeURIComponent(s.keyword)}`);
+    renderUsersTable(container, res.data);
+    renderPagination('usersPagination', res.data.pagination, p => { states.users.page = p; loadUsers(); });
+  } catch (e) {
+    container.innerHTML = '<div class="empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function renderUsersTable(container, data) {
+  if (!data.list.length) {
+    container.innerHTML = '<div class="empty">暂无用户数据</div>';
+    return;
+  }
+  let html = `<table>
+    <thead><tr>
+      <th>ID</th><th>昵称</th><th>账号</th><th>IP</th><th>位置</th><th>状态</th><th>注册时间</th><th>操作</th>
+    </tr></thead><tbody>`;
+  for (const u of data.list) {
+    const status = u.isBanned
+      ? '<span class="badge badge-danger">已封禁</span>'
+      : '<span class="badge badge-success">正常</span>';
+    html += `<tr>
+      <td>${u.id}</td>
+      <td>${esc(u.nickname)}</td>
+      <td>${esc(u.account || '-')}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(u.ipAddress || '-')}</td>
+      <td>${esc(u.location || '-')}</td>
+      <td>${status}</td>
+      <td style="font-size:12px">${formatTime(u.createdAt)}</td>
+      <td>
+        <button class="action-btn" onclick="viewUser(${u.id})">详情</button>
+        <button class="action-btn ${u.isBanned ? 'success' : 'warning'}" onclick="toggleBan(${u.id}, ${u.isBanned})">${u.isBanned ? '解封' : '封禁'}</button>
+        <button class="action-btn danger" onclick="deleteUser(${u.id}, '${esc(u.nickname)}')">删除</button>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function viewUser(id) {
+  try {
+    const res = await api(`/users/${id}`);
+    const u = res.data;
+    let statsHtml = '';
+    if (u.stats) {
+      statsHtml = `<div class="field"><label>动态数 / 评论数 / 点赞数</label><div class="val">${u.stats.moments} / ${u.stats.comments} / ${u.stats.likes}</div></div>`;
+    }
+    $('modalContent').innerHTML = `
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h3>👤 用户详情 #${u.id}</h3>
+      <div class="field"><label>昵称</label><div class="val">${esc(u.nickname)}</div></div>
+      <div class="field"><label>账号</label><div class="val">${esc(u.account || '-')}</div></div>
+      <div class="field"><label>初始昵称</label><div class="val">${esc(u.initialNickname || '-')}</div></div>
+      <div class="field"><label>头像颜色</label><div class="val">${u.avatarColor || '-'}</div></div>
+      <div class="field"><label>位置</label><div class="val">${esc(u.location || '-')}</div></div>
+      <div class="field"><label>IP 地址</label><div class="val">${esc(u.ipAddress || '-')}</div></div>
+      <div class="field"><label>设备 ID</label><div class="val" style="font-size:12px;word-break:break-all">${esc(u.deviceId || '-')}</div></div>
+      <div class="field"><label>状态</label><div class="val">${u.isBanned ? '<span class="badge badge-danger">已封禁</span>' : '<span class="badge badge-success">正常</span>'}</div></div>
+      ${statsHtml}
+      <div class="field"><label>创建时间</label><div class="val">${formatTime(u.createdAt)}</div></div>
+      <div class="field"><label>更新时间</label><div class="val">${formatTime(u.updatedAt)}</div></div>
+    `;
+    $('modalOverlay').classList.add('show');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function toggleBan(id, isBanned) {
+  const action = isBanned ? '解封' : '封禁';
+  if (!confirm(`确定${action}该用户吗？`)) return;
+  try {
+    await api(`/users/${id}/ban`, { method: 'PUT' });
+    toast(isBanned ? '已解封用户' : '已封禁用户');
+    loadUsers();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function deleteUser(id, nickname) {
+  if (!confirm(`确定要删除用户「${nickname}」及其所有数据吗？此操作不可逆！`)) return;
+  try {
+    await api(`/users/${id}`, { method: 'DELETE' });
+    toast('用户已删除');
+    loadUsers();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ==================== Moments ====================
+async function loadMoments() {
+  const container = $('momentsTableContainer');
+  showLoading(container);
+  try {
+    const s = states.moments;
+    const res = await api(`/moments?page=${s.page}&pageSize=${s.pageSize}`);
+    renderMomentsTable(container, res.data);
+    renderPagination('momentsPagination', res.data.pagination, p => { states.moments.page = p; loadMoments(); });
+  } catch (e) {
+    container.innerHTML = '<div class="empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function renderMomentsTable(container, data) {
+  if (!data.list.length) {
+    container.innerHTML = '<div class="empty">暂无动态</div>';
+    return;
+  }
+  let html = `<table>
+    <thead><tr>
+      <th>ID</th><th>内容</th><th>作者</th><th>图片</th><th>点赞</th><th>官方</th><th>时间</th><th>操作</th>
+    </tr></thead><tbody>`;
+  for (const m of data.list) {
+    const content = m.content ? m.content.substring(0, 40) + (m.content.length > 40 ? '...' : '') : '(无文字)';
+    const imgHtml = m.imageUrl ? '<span style="color:var(--success)">有</span>' : '<span style="color:var(--text-muted)">无</span>';
+    const official = m.isOfficial ? '<span class="badge badge-warning">官方</span>' : '-';
+    html += `<tr>
+      <td>${m.id}</td>
+      <td title="${esc(m.content || '')}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(content)}</td>
+      <td>${esc(m.author)}</td>
+      <td>${imgHtml}</td>
+      <td>${m.likes}</td>
+      <td>${official}</td>
+      <td style="font-size:12px">${formatTime(m.createdAt)}</td>
+      <td>
+        <button class="action-btn" onclick="viewMoment(${m.id})">详情</button>
+        <button class="action-btn danger" onclick="deleteMoment(${m.id})">删除</button>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function viewMoment(id) {
+  try {
+    const res = await api(`/moments/${id}`);
+    const m = res.data;
+    let commentsHtml = '';
+    if (m.comments && m.comments.length) {
+      commentsHtml = '<div class="field"><label>评论 (' + m.comments.length + '条)</label><div class="val">';
+      for (const c of m.comments) {
+        commentsHtml += `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:13px"><strong>${esc(c.author)}</strong>: ${esc(c.content)} <span style="color:var(--text-muted);font-size:11px">${formatTime(c.createdAt)}</span></div>`;
+      }
+      commentsHtml += '</div></div>';
+    }
+    const imgHtml = m.imageUrl ? `<div class="field"><label>图片 URL</label><div class="val" style="font-size:12px;word-break:break-all">${esc(m.imageUrl)}</div></div>` : '';
+    const videoHtml = m.video ? `<div class="field"><label>视频 URL</label><div class="val" style="font-size:12px;word-break:break-all">${esc(m.video)}</div></div>` : '';
+
+    $('modalContent').innerHTML = `
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h3>📝 动态详情 #${m.id}</h3>
+      <div class="field"><label>作者</label><div class="val">${esc(m.author)} (${esc(m.userAccount || '-')})</div></div>
+      <div class="field"><label>内容</label><div class="val" style="white-space:pre-wrap">${esc(m.content || '(无文字)')}</div></div>
+      ${imgHtml}
+      ${videoHtml}
+      <div class="field"><label>位置</label><div class="val">${esc(m.location || '-')}</div></div>
+      <div class="field"><label>点赞数</label><div class="val">${m.likes}</div></div>
+      <div class="field"><label>官方动态</label><div class="val">${m.isOfficial ? '是' : '否'}</div></div>
+      <div class="field"><label>创建时间</label><div class="val">${formatTime(m.createdAt)}</div></div>
+      ${commentsHtml}
+    `;
+    $('modalOverlay').classList.add('show');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function deleteMoment(id) {
+  if (!confirm('确定删除该动态吗？')) return;
+  try {
+    await api(`/moments/${id}`, { method: 'DELETE' });
+    toast('动态已删除');
+    loadMoments();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ==================== Comments ====================
+async function loadComments() {
+  const container = $('commentsTableContainer');
+  showLoading(container);
+  try {
+    const s = states.comments;
+    const res = await api(`/comments?page=${s.page}&pageSize=${s.pageSize}`);
+    renderCommentsTable(container, res.data);
+    renderPagination('commentsPagination', res.data.pagination, p => { states.comments.page = p; loadComments(); });
+  } catch (e) {
+    container.innerHTML = '<div class="empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function renderCommentsTable(container, data) {
+  if (!data.list.length) {
+    container.innerHTML = '<div class="empty">暂无评论</div>';
+    return;
+  }
+  let html = `<table>
+    <thead><tr>
+      <th>ID</th><th>内容</th><th>作者</th><th>动态 ID</th><th>时间</th><th>操作</th>
+    </tr></thead><tbody>`;
+  for (const c of data.list) {
+    const content = c.content ? c.content.substring(0, 50) + (c.content.length > 50 ? '...' : '') : '';
+    html += `<tr>
+      <td>${c.id}</td>
+      <td title="${esc(c.content || '')}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(content)}</td>
+      <td>${esc(c.author)}</td>
+      <td>${c.momentId}</td>
+      <td style="font-size:12px">${formatTime(c.createdAt)}</td>
+      <td>
+        <button class="action-btn danger" onclick="deleteComment(${c.id})">删除</button>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function deleteComment(id) {
+  if (!confirm('确定删除该评论吗？')) return;
+  try {
+    await api(`/comments/${id}`, { method: 'DELETE' });
+    toast('评论已删除');
+    loadComments();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ==================== Pagination ====================
+function renderPagination(containerId, pagination, onPage) {
+  const el = $(containerId);
+  if (!pagination || pagination.totalPages <= 1) { el.innerHTML = ''; return; }
+  const { page, totalPages, total } = pagination;
+  let html = `<button onclick="onPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+    <span>第 ${page} / ${totalPages} 页 (共 ${total} 条)</span>
+    <button onclick="onPage(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>下一页</button>`;
+  el.innerHTML = html;
+  el.querySelectorAll('button').forEach(b => {
+    const clickHandler = b.getAttribute('onclick');
+    if (clickHandler) {
+      b.removeAttribute('onclick');
+      b.addEventListener('click', () => eval(clickHandler));
+    }
+  });
+}
+
+// Make onPage available globally for pagination eval
+window.onPage = function(containerId, page) {
+  // Not used directly
+};
+
+// ==================== Escape ====================
+function esc(s) {
+  if (typeof s !== 'string') return s;
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// ==================== Modal ====================
+function closeModal() { $('modalOverlay').classList.remove('show'); }
+$('modalOverlay').addEventListener('click', e => { if (e.target === $('modalOverlay')) closeModal(); });
+
+// ==================== Init ====================
+// auto-focus token input
+$('tokenInput').focus();
+</script>
+</body>
+</html>

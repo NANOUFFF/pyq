@@ -1,10 +1,10 @@
 import { Hono } from "hono"
 import { handle } from "hono/cloudflare-pages"
-import { momentsRoutes } from "../src/routes/moments"
-import { usersRoutes } from "../src/routes/users"
-import { uploadRoutes } from "../src/routes/upload"
-import { adminRoutes } from "../src/routes/admin"
-import { authMiddleware } from "../src/middleware/auth"
+import { momentsRoutes } from "../../src/routes/moments"
+import { usersRoutes } from "../../src/routes/users"
+import { uploadRoutes } from "../../src/routes/upload"
+import { adminRoutes } from "../../src/routes/admin"
+import { authMiddleware } from "../../src/middleware/auth"
 
 export type Env = {
   DB: D1Database
@@ -31,7 +31,8 @@ app.use("/*", async (c, next) => {
 
 app.use("/api/*", authMiddleware)
 
-app.get("/", (c) => c.json({ app: c.env.APP_NAME, version: "1.0.0", status: "ok" }))
+// 健康检查
+app.get("/api", (c) => c.json({ app: c.env.APP_NAME, version: "1.0.0", status: "ok" }))
 
 app.route("/api/moments", momentsRoutes)
 app.route("/api/users", usersRoutes)
